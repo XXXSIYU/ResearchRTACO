@@ -86,11 +86,11 @@ public class MainRTACOSimulation{
         displayResults(allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
     }
 
-    // Utility method to display results
+    /// Utility method to display results
     private static void displayResults(List<Pair<Integer, Integer>> allocatedTasks, List<Double> taskCompletionTime, List<Double> energyConsumption) {
         System.out.println("Allocated Tasks:");
         for (Pair<Integer, Integer> task : allocatedTasks) {
-            System.out.println("Task ID: " + task.getFirst() + " -> VM ID: " + task.getSecond());
+            System.out.println("Task ID: " + task.getKey() + " -> VM ID: " + task.getValue());
         }
 
         double averageCompletionTime = taskCompletionTime.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
@@ -99,4 +99,5 @@ public class MainRTACOSimulation{
         System.out.println("Average Completion Time: " + averageCompletionTime);
         System.out.println("Average Energy Consumption: " + averageEnergyConsumption);
     }
+
 }
