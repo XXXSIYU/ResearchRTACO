@@ -9,6 +9,8 @@ import org.fog.entities.RTACOFogDevice;
 import org.fog.entities.Task;
 import org.fog.utils.Pair;
 import org.fog.utils.VMClustering; // 引入 VMClustering 類別
+import org.fog.utils.VMSelection;
+
 
 import java.util.List;
 import java.util.Map;
@@ -399,6 +401,10 @@ public class RTACOPlacement extends ModulePlacement {
                 vmGroups.computeIfAbsent(label, k -> new ArrayList<>()).add(vms.get(i));
             }
         }
+        
+        // 使用 VMSelection 選擇合適的 VM
+        List<RTACOFogDevice> selectedVMs = VMSelection.selectVMs(vms);
+        
 
         // 計算完成時間與能量消耗的最小值和最大值
         double minCompletionTime = Double.POSITIVE_INFINITY;
@@ -407,7 +413,7 @@ public class RTACOPlacement extends ModulePlacement {
         double maxEnergyConsumption = Double.NEGATIVE_INFINITY;
 
         for (Task task : tasks) {
-            for (RTACOFogDevice vm : vms) {
+            for (RTACOFogDevice vm : selectedVMs) {
                 double ct = FormulaUtils.completionTime(task, vm);
                 double ec = FormulaUtils.energyConsumption(task, vm);
                 minCompletionTime = Math.min(minCompletionTime, ct);
