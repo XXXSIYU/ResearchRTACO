@@ -104,36 +104,6 @@ public class RTACOPlacement extends ModulePlacement {
             System.err.println("無法將模組 " + module.getName() + " 放置於設備 " + selectedDevice.getName());
         }
     }
-    
- // 新增 normalizeFeatures 方法，用於標準化特徵
-    private double[][] normalizeFeatures(double[][] X) {
-        int featureCount = X[0].length;
-        double[] minValues = new double[featureCount];
-        double[] maxValues = new double[featureCount];
-
-        // 計算每個特徵的最小值和最大值
-        for (int j = 0; j < featureCount; j++) {
-            minValues[j] = Double.MAX_VALUE;
-            maxValues[j] = Double.MIN_VALUE;
-            for (int i = 0; i < X.length; i++) {
-                minValues[j] = Math.min(minValues[j], X[i][j]);
-                maxValues[j] = Math.max(maxValues[j], X[i][j]);
-            }
-        }
-
-        // 標準化 X 中的特徵
-        double[][] X_normalized = new double[X.length][featureCount];
-        for (int i = 0; i < X.length; i++) {
-            for (int j = 0; j < featureCount; j++) {
-                X_normalized[i][j] = (X[i][j] - minValues[j]) / (maxValues[j] - minValues[j]);
-            }
-        }
-        
-        return X_normalized;
-    }
-    
-    
-    
 
     // allocateTaskAPSO 方法
     public List<Pair<Integer, Integer>> allocateTaskAPSO(List<Task> tasks, List<RTACOFogDevice> vms, List<Double> taskCompletionTime, List<RTACOFogDevice> remainingVms, List<Double> energyConsumptionAPSO, double aru, double lb, List<Integer> untrustedVms) {
