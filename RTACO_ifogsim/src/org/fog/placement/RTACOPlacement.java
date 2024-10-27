@@ -111,7 +111,9 @@ public class RTACOPlacement extends ModulePlacement {
     public List<Pair<Integer, Integer>> allocateTaskAPSO(List<Task> tasks, List<RTACOFogDevice> vms, List<Double> taskCompletionTime, List<RTACOFogDevice> remainingVms, List<Double> energyConsumptionAPSO, double aru, double lb, List<Integer> untrustedVms) {
         List<Pair<Integer, Integer>> allocatedTasks = new ArrayList<>();
         Map<Integer, Integer> vmSelectedTimes = new HashMap<>();
-
+        
+     // 使用 VMSelection 來選擇合適的 VM
+        List<RTACOFogDevice> selectedVMs = VMSelection.selectVMs(vms);
         for (Task task : tasks) {
             List<RTACOFogDevice> availableVms = new ArrayList<>();
             for (RTACOFogDevice vm : vms) {
@@ -163,6 +165,9 @@ public class RTACOPlacement extends ModulePlacement {
     public List<Pair<Integer, Integer>> assignTasksToVmsBaseline(List<Task> tasks, List<RTACOFogDevice> vms, List<Double> taskCompletionTime, List<RTACOFogDevice> remainingVms, List<Double> energyConsumptionClustered, double aru, double lb, List<Integer> untrustedVms) {
         List<Pair<Integer, Integer>> allocatedTasks = new ArrayList<>();
         Map<Integer, Integer> vmSelectedTimes = new HashMap<>();
+        
+     // 使用 VMSelection 來選擇合適的 VM
+        List<RTACOFogDevice> selectedVMs = VMSelection.selectVMs(vms);
         Random random = new Random();
 
         for (Task task : tasks) {
