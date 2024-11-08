@@ -13,84 +13,84 @@ import org.fog.utils.VMClustering;
 import org.fog.utils.FormulaUtils;
 import org.fog.utils.Pair;
 
-public class MainRTACOSimulation {
+public class MainRTACOSimulator {
 
     public static void main(String[] args) {
-        // Step 1: Generate VMs and Tasks
+        // Step 1: 生成虛擬機和任務
         int numVMs = 200; // 虛擬機數量
         int numTasks = 100; // 任務數量
 
         // 生成虛擬機
-        List<RTACOFogDevice> vms = VMGenerator.generateVMs200(numVMs);
+        List<RTACOFogDevice> vms = VMGenerator.generateVMsTypeB(numVMs);
 
         // 生成任務
         List<Task> tasks = TaskGenerator.generateTasks(numTasks);
 
-        // Step 2: VM Selection
+        // Step 2: VM 選擇
         List<RTACOFogDevice> selectedVMs = VMSelection.selectVMs(vms);
         selectedVMs.sort((vm1, vm2) -> Integer.compare(vm1.getId(), vm2.getId()));
 
-        System.out.println("\nSelected VMs:");
+        System.out.println("\n選擇的虛擬機：");
         for (RTACOFogDevice vm : selectedVMs) {
-            System.out.println(vm + ", Trust: " + vm.getTrustValue());
+            System.out.println("VM ID: " + vm.getId() + ", 信任值: " + vm.getTrustValue());
         }
 
-        // Clustering the VMs using VMClustering
+        // 對虛擬機進行分群
         List<Integer> vmClusters = VMClustering.cluster(vms);
-        System.out.println("\nVM Clustering:");
+        System.out.println("\n虛擬機分群結果：");
         for (int i = 0; i < vmClusters.size(); i++) {
-            System.out.println("VM ID: " + vms.get(i).getId() + ", Cluster: " + vmClusters.get(i));
+            System.out.println("VM ID: " + vms.get(i).getId() + ", 群組: " + vmClusters.get(i));
         }
 
-        // Step 3: Task Allocation Methods
-        RTACOPlacement placement = new RTACOPlacement(vms); // 使用新的建構子
+        // Step 3: 任務分配方法
+        RTACOPlacement placement = new RTACOPlacement(vms);
 
-        // FA (Firefly Algorithm)
+        // FA (Firefly Algorithm) 方法
         List<Double> taskCompletionTimeFA = new ArrayList<>();
         List<Double> energyConsumptionFA = new ArrayList<>();
-        Double[] aruFA = new Double[]{0.0}, lbFA = new Double[]{0.0};
+        double aruFA = 0.0, lbFA = 0.0;
         List<RTACOFogDevice> remainingVMsFA = new ArrayList<>(selectedVMs);
         List<Pair<Integer, Integer>> allocatedTasksFA = placement.allocateTaskFA(
                 tasks, selectedVMs, taskCompletionTimeFA, remainingVMsFA,
                 energyConsumptionFA, aruFA, lbFA);
 
-        System.out.println("\nFA (Firefly Algorithm) Results:");
+        System.out.println("\nFA (Firefly Algorithm) 結果：");
         displayResults(allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
 
-        // APSO (Ant Colony Optimization)
+        // APSO 方法
         List<Double> taskCompletionTimeAPSO = new ArrayList<>();
         List<Double> energyConsumptionAPSO = new ArrayList<>();
-        Double[] aruAPSO = new Double[]{0.0}, lbAPSO = new Double[]{0.0};
+        double aruAPSO = 0.0, lbAPSO = 0.0;
         List<RTACOFogDevice> remainingVMsAPSO = new ArrayList<>(selectedVMs);
         List<Pair<Integer, Integer>> allocatedTasksAPSO = placement.allocateTaskAPSO(
                 tasks, selectedVMs, taskCompletionTimeAPSO, remainingVMsAPSO,
                 energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
 
-        System.out.println("\nAPSO Results:");
+        System.out.println("\nAPSO 結果：");
         displayResults(allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
 
-        // MinFun Method
+        // MinFun 方法
         List<Double> taskCompletionTimeMinFun = new ArrayList<>();
         List<Double> energyConsumptionMinFun = new ArrayList<>();
-        Double[] aruMinFun = new Double[]{0.0}, lbMinFun = new Double[]{0.0};
+        double aruMinFun = 0.0, lbMinFun = 0.0;
         List<RTACOFogDevice> remainingVMsMinFun = new ArrayList<>(vms);
         List<Pair<Integer, Integer>> allocatedTasksMinFun = placement.assignTasksToVmsMinFun(
                 tasks, vms, taskCompletionTimeMinFun, remainingVMsMinFun,
                 energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
 
-        System.out.println("\nMinFun Method Results:");
+        System.out.println("\nMinFun 方法結果：");
         displayResults(allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
 
-        // Clustering Method
+        // Clustering 方法
         List<Double> taskCompletionTimeCluster = new ArrayList<>();
         List<Double> energyConsumptionCluster = new ArrayList<>();
-        Double[] aruCluster = new Double[]{0.0}, lbCluster = new Double[]{0.0};
+        double aruCluster = 0.0, lbCluster = 0.0;
         List<RTACOFogDevice> remainingVMsCluster = new ArrayList<>(vms);
         List<Pair<Integer, Integer>> allocatedTasksCluster = placement.assignTasksWithClustering(
                 tasks, vms, taskCompletionTimeCluster, remainingVMsCluster,
                 energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
 
-        System.out.println("\nClustering Method Results:");
+        System.out.println("\nClustering 方法結果：");
         displayResults(allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
     }
 
@@ -99,9 +99,9 @@ public class MainRTACOSimulation {
             List<Pair<Integer, Integer>> allocatedTasks,
             List<Double> taskCompletionTime,
             List<Double> energyConsumption) {
-        System.out.println("Allocated Tasks:");
+        System.out.println("任務分配結果：");
         for (Pair<Integer, Integer> task : allocatedTasks) {
-            System.out.println("Task ID: " + task.getKey() + " -> VM ID: " + task.getValue());
+            System.out.println("任務 ID: " + task.getKey() + " -> VM ID: " + task.getValue());
         }
 
         double averageCompletionTime = taskCompletionTime.stream()
@@ -113,7 +113,7 @@ public class MainRTACOSimulation {
                 .average()
                 .orElse(0.0);
 
-        System.out.println("Average Completion Time: " + averageCompletionTime);
-        System.out.println("Average Energy Consumption: " + averageEnergyConsumption);
+        System.out.println("平均完成時間: " + averageCompletionTime);
+        System.out.println("平均能量消耗: " + averageEnergyConsumption);
     }
 }
