@@ -27,7 +27,12 @@ public class VMSelection {
         // 進行正規化
         for (int i = 0; i < numRows; i++) {
             for (int j = 0; j < numCols; j++) {
-                XNormalized[i][j] = (X[i][j] - minValues[j]) / (maxValues[j] - minValues[j]);
+                double range = maxValues[j] - minValues[j];
+                if (range == 0) {
+                    XNormalized[i][j] = 0.0;
+                } else {
+                    XNormalized[i][j] = (X[i][j] - minValues[j]) / range;
+                }
             }
         }
 
@@ -62,7 +67,7 @@ public class VMSelection {
             }
         }
 
-        // 計算分數閾值（20百分位）
+        // 計算分數閾值（20 百分位數）
         double threshold = calculatePercentile(scores, 20);
 
         // 選擇分數高於閾值的 VM
@@ -77,10 +82,18 @@ public class VMSelection {
     }
 
     // 計算百分位數的方法
-    private static double calculatePercentile(double[] scores, int percentile) {
+    private static double calculatePercentile(double[] scores, double percentile) {
         double[] sortedScores = scores.clone();
         java.util.Arrays.sort(sortedScores);
-        int index = (int) Math.ceil(percentile / 100.0 * sortedScores.length) - 1;
-        return sortedScores[index];
+        int n = sortedScores.length;
+        double rank = percentile / 100.0 * (n - 1);
+        int lowerIndex = (int) Math.floor(rank);
+        int upperIndex = (int) Math.ceil(rank);
+        if (lowerIndex == upperIndex) {
+            return sortedScores[lowerIndex];
+        } else {
+            double weight = rank - lowerIndex;
+            return sortedScores[lowerIndex] * (1 - weight) + sortedScores[upperIndex] * weight;
+        }
     }
 }

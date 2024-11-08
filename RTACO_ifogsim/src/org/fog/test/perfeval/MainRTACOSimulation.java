@@ -13,17 +13,17 @@ import org.fog.utils.VMClustering;
 import org.fog.utils.FormulaUtils;
 import org.fog.utils.Pair;
 
-public class MainRTACOSimulation{
+public class MainRTACOSimulation {
 
     public static void main(String[] args) {
         // Step 1: Generate VMs and Tasks
-        int numVMs = 200; // Number of VMs
-        int numTasks = 100; // Number of tasks
+        int numVMs = 200; // 虛擬機數量
+        int numTasks = 100; // 任務數量
 
-        // Generate VMs using VMGenerator
+        // 生成虛擬機
         List<RTACOFogDevice> vms = VMGenerator.generateVMs200(numVMs);
 
-        // Generate tasks using TaskGenerator
+        // 生成任務
         List<Task> tasks = TaskGenerator.generateTasks(numTasks);
 
         // Step 2: VM Selection
@@ -43,61 +43,77 @@ public class MainRTACOSimulation{
         }
 
         // Step 3: Task Allocation Methods
-        RTACOPlacement placement = new RTACOPlacement(vms, new ArrayList<>()); // Initialize with empty module list for now
+        RTACOPlacement placement = new RTACOPlacement(vms); // 使用新的建構子
 
         // FA (Firefly Algorithm)
         List<Double> taskCompletionTimeFA = new ArrayList<>();
         List<Double> energyConsumptionFA = new ArrayList<>();
-        double aruFA = 0, lbFA = 0;
+        Double[] aruFA = new Double[]{0.0}, lbFA = new Double[]{0.0};
         List<RTACOFogDevice> remainingVMsFA = new ArrayList<>(selectedVMs);
-        List<Pair<Integer, Integer>> allocatedTasksFA = placement.allocateTaskFA(tasks, selectedVMs, taskCompletionTimeFA, remainingVMsFA, energyConsumptionFA, aruFA, lbFA);
-        
+        List<Pair<Integer, Integer>> allocatedTasksFA = placement.allocateTaskFA(
+                tasks, selectedVMs, taskCompletionTimeFA, remainingVMsFA,
+                energyConsumptionFA, aruFA, lbFA);
+
         System.out.println("\nFA (Firefly Algorithm) Results:");
         displayResults(allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
 
         // APSO (Ant Colony Optimization)
         List<Double> taskCompletionTimeAPSO = new ArrayList<>();
         List<Double> energyConsumptionAPSO = new ArrayList<>();
-        double aruAPSO = 0, lbAPSO = 0;
+        Double[] aruAPSO = new Double[]{0.0}, lbAPSO = new Double[]{0.0};
         List<RTACOFogDevice> remainingVMsAPSO = new ArrayList<>(selectedVMs);
-        List<Pair<Integer, Integer>> allocatedTasksAPSO = placement.allocateTaskAPSO(tasks, selectedVMs, taskCompletionTimeAPSO, remainingVMsAPSO, energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
-        
+        List<Pair<Integer, Integer>> allocatedTasksAPSO = placement.allocateTaskAPSO(
+                tasks, selectedVMs, taskCompletionTimeAPSO, remainingVMsAPSO,
+                energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
+
         System.out.println("\nAPSO Results:");
         displayResults(allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
 
         // MinFun Method
         List<Double> taskCompletionTimeMinFun = new ArrayList<>();
         List<Double> energyConsumptionMinFun = new ArrayList<>();
-        double aruMinFun = 0, lbMinFun = 0;
+        Double[] aruMinFun = new Double[]{0.0}, lbMinFun = new Double[]{0.0};
         List<RTACOFogDevice> remainingVMsMinFun = new ArrayList<>(vms);
-        List<Pair<Integer, Integer>> allocatedTasksMinFun = placement.assignTasksToVmsMinFun(tasks, vms, taskCompletionTimeMinFun, remainingVMsMinFun, energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
-        
+        List<Pair<Integer, Integer>> allocatedTasksMinFun = placement.assignTasksToVmsMinFun(
+                tasks, vms, taskCompletionTimeMinFun, remainingVMsMinFun,
+                energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
+
         System.out.println("\nMinFun Method Results:");
         displayResults(allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
 
         // Clustering Method
         List<Double> taskCompletionTimeCluster = new ArrayList<>();
         List<Double> energyConsumptionCluster = new ArrayList<>();
-        double aruCluster = 0, lbCluster = 0;
+        Double[] aruCluster = new Double[]{0.0}, lbCluster = new Double[]{0.0};
         List<RTACOFogDevice> remainingVMsCluster = new ArrayList<>(vms);
-        List<Pair<Integer, Integer>> allocatedTasksCluster = placement.assignTasksWithClustering(tasks, vms, taskCompletionTimeCluster, remainingVMsCluster, energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
-        
+        List<Pair<Integer, Integer>> allocatedTasksCluster = placement.assignTasksWithClustering(
+                tasks, vms, taskCompletionTimeCluster, remainingVMsCluster,
+                energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
+
         System.out.println("\nClustering Method Results:");
         displayResults(allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
     }
 
-    /// Utility method to display results
-    private static void displayResults(List<Pair<Integer, Integer>> allocatedTasks, List<Double> taskCompletionTime, List<Double> energyConsumption) {
+    // 用於顯示結果的輔助方法
+    private static void displayResults(
+            List<Pair<Integer, Integer>> allocatedTasks,
+            List<Double> taskCompletionTime,
+            List<Double> energyConsumption) {
         System.out.println("Allocated Tasks:");
         for (Pair<Integer, Integer> task : allocatedTasks) {
             System.out.println("Task ID: " + task.getKey() + " -> VM ID: " + task.getValue());
         }
 
-        double averageCompletionTime = taskCompletionTime.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-        double averageEnergyConsumption = energyConsumption.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double averageCompletionTime = taskCompletionTime.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+        double averageEnergyConsumption = energyConsumption.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
 
         System.out.println("Average Completion Time: " + averageCompletionTime);
         System.out.println("Average Energy Consumption: " + averageEnergyConsumption);
     }
-
 }
