@@ -34,7 +34,7 @@ public class RTACOFogDevice extends FogDevice {
      * @param powerModel 電源模型，用來計算設備的功耗
      * @param transmissionRate 傳輸速率
      */
-    public RTACOFogDevice(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel) throws Exception {
+    public RTACOFogDevice(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel, double transmissionRate) throws Exception {
         super(name, mips, ram, uplinkBandwidth, downlinkBandwidth, ratePerMips, powerModel);
         this.availableCpu = mips; // 初始化設備的可用 CPU 為設備的 MIPS 值
         this.totalCpu = mips;  // 設定總 CPU
@@ -46,7 +46,6 @@ public class RTACOFogDevice extends FogDevice {
         this.random = new Random(); // 初始化隨機數生成器
         this.x = random.nextDouble(); // 初始化 X 軸坐標
         this.y = random.nextDouble(); // 初始化 Y 軸坐標
-        
     }
 
     /**
@@ -175,6 +174,11 @@ public class RTACOFogDevice extends FogDevice {
         return random.nextDouble() < successProbability; // 隨機決定任務是否成功
     }
     
+    
+ // 如果需要，也可以添加 setTransmissionRate 方法
+    public void setTransmissionRate(double transmissionRate) {
+        this.transmissionRate = transmissionRate;
+    }
 
     // 可以在這裡擴展其他功能，如資源分配或能源消耗的管理
 }

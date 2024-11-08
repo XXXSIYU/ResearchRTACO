@@ -5,16 +5,16 @@ import java.util.Objects;
 public class VM {
     private int id;
     private double trustValue;
-    private double totalCpu;       // 總CPU資源（單位：MIPS）
-    private double availableCpu;   // 可用的CPU資源（單位：MIPS）
+    private double totalCpu;       // 總 CPU 資源（單位：MIPS）
+    private double availableCpu;   // 可用的 CPU 資源（單位：MIPS）
     private double totalMemory;    // 總記憶體資源（單位：MB）
     private double availableMemory;// 可用的記憶體資源（單位：MB）
     private int transmissionRate;  // 傳輸速率（單位：Mbps）
     private int processingSpeed;   // 處理速度（單位：MIPS）
-    private double x; // VM的座標（單位：...）
-    private double y; // VM的座標（單位：...）
+    private double x; // VM 的座標（單位：...）
+    private double y; // VM 的座標（單位：...）
 
-    // 構造函數
+    // 建構子
     public VM(int id, double trustValue, double totalCpu, double availableCpu, double totalMemory, double availableMemory,
               int transmissionRate, int processingSpeed, double x, double y) {
         if (processingSpeed <= 0 || transmissionRate <= 0) {

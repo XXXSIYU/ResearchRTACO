@@ -37,7 +37,6 @@ public class FogDevice extends PowerDatacenter {
     protected Map<String, List<String>> appToModulesMap;
     protected Map<Integer, Double> childToLatencyMap;
 
-
     protected Map<Integer, Integer> cloudTrafficMap;
 
     protected double lockTime;
@@ -86,16 +85,17 @@ public class FogDevice extends PowerDatacenter {
 
     protected List<Integer> clusterMembers = new ArrayList<Integer>();
     protected boolean isInCluster = false;
-    protected boolean selfCluster = false; // IF there is only one fog device in one cluster without any sibling
-    protected Map<Integer, Double> clusterMembersToLatencyMap; // latency to other cluster members
+    protected boolean selfCluster = false; // If there is only one fog device in one cluster without any sibling
+    protected Map<Integer, Double> clusterMembersToLatencyMap; // Latency to other cluster members
 
-    protected Queue<Pair<Tuple, Integer>> clusterTupleQueue;// tuple and destination cluster device ID
-    protected boolean isClusterLinkBusy; //Flag denoting whether the link connecting to cluster from this FogDevice is busy
+    protected Queue<Pair<Tuple, Integer>> clusterTupleQueue; // Tuple and destination cluster device ID
+    protected boolean isClusterLinkBusy; // Flag denoting whether the link connecting to cluster from this FogDevice is busy
     protected double clusterLinkBandwidth;
-	private long availableMips;
-	private int availableRam;
-	private double trustValue;
 
+    // 新增的屬性
+    private long availableMips;
+    private int availableRam;
+    private double trustValue;
 
     public FogDevice(
             String name,
@@ -125,7 +125,7 @@ public class FogDevice extends PowerDatacenter {
             throw new Exception(super.getName()
                     + " : Error - this entity has no PEs. Therefore, can't process any Cloudlets.");
         }
-        // stores id of this class
+        // Stores id of this class
         getCharacteristics().setId(super.getId());
 
         applicationMap = new HashMap<String, Application>();
@@ -134,7 +134,6 @@ public class FogDevice extends PowerDatacenter {
         southTupleQueue = new LinkedList<Pair<Tuple, Integer>>();
         setNorthLinkBusy(false);
         setSouthLinkBusy(false);
-
 
         setChildrenIds(new ArrayList<Integer>());
         setChildToOperatorsMap(new HashMap<Integer, List<String>>());
@@ -151,22 +150,19 @@ public class FogDevice extends PowerDatacenter {
 
         clusterTupleQueue = new LinkedList<>();
         setClusterLinkBusy(false);
-
     }
 
     public FogDevice(
             String name, long mips, int ram,
             double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel) throws Exception {
-        super(name, null, null, new LinkedList<Storage>(), 0);
 
+        // 創建 Pe 列表
         List<Pe> peList = new ArrayList<Pe>();
-
-        // 3. Create PEs and add these into a list.
-        peList.add(new Pe(0, new PeProvisionerOverbooking(mips))); // need to store Pe id and MIPS Rating
+        peList.add(new Pe(0, new PeProvisionerOverbooking(mips))); // Need to store Pe id and MIPS Rating
 
         int hostId = FogUtils.generateEntityId();
-        long storage = 1000000; // host storage
-        int bw = 10000;
+        long storage = 1000000; // Host storage
+        int bw = 10000; // Bandwidth
 
         PowerHost host = new PowerHost(
                 hostId,
@@ -181,8 +177,10 @@ public class FogDevice extends PowerDatacenter {
         List<Host> hostList = new ArrayList<Host>();
         hostList.add(host);
 
-        setVmAllocationPolicy(new AppModuleAllocationPolicy(hostList));
+        // 創建 VmAllocationPolicy
+        VmAllocationPolicy vmAllocationPolicy = new AppModuleAllocationPolicy(hostList);
 
+        // 定義資料中心特性
         String arch = Config.FOG_DEVICE_ARCH;
         String os = Config.FOG_DEVICE_OS;
         String vmm = Config.FOG_DEVICE_VMM;
@@ -196,13 +194,21 @@ public class FogDevice extends PowerDatacenter {
                 arch, os, vmm, host, time_zone, cost, costPerMem,
                 costPerStorage, costPerBw);
 
-        setCharacteristics(characteristics);
+        // 呼叫父類構造函數，傳遞已初始化的參數
+        super(name, characteristics, vmAllocationPolicy, new LinkedList<Storage>(), 0);
 
-        setLastProcessTime(0.0);
-        setVmList(new ArrayList<Vm>());
+        // 設定 FogDevice 的其他屬性
+        setLevel(1);
         setUplinkBandwidth(uplinkBandwidth);
         setDownlinkBandwidth(downlinkBandwidth);
-        setUplinkLatency(uplinkLatency);
+        setUplinkLatency(0); // 根據需要設置
+        setRatePerMips(ratePerMips);
+
+        setCharacteristics(characteristics);
+        setVmAllocationPolicy(vmAllocationPolicy);
+        setLastProcessTime(0.0);
+        setVmList(new ArrayList<Vm>());
+        setSchedulingInterval(0);
         setAssociatedActuatorIds(new ArrayList<Pair<Integer, Double>>());
         for (Host host1 : getCharacteristics().getHostList()) {
             host1.setDatacenter(this);
@@ -213,7 +219,6 @@ public class FogDevice extends PowerDatacenter {
                     + " : Error - this entity has no PEs. Therefore, can't process any Cloudlets.");
         }
 
-
         getCharacteristics().setId(super.getId());
 
         applicationMap = new HashMap<String, Application>();
@@ -222,7 +227,6 @@ public class FogDevice extends PowerDatacenter {
         southTupleQueue = new LinkedList<Pair<Tuple, Integer>>();
         setNorthLinkBusy(false);
         setSouthLinkBusy(false);
-
 
         setChildrenIds(new ArrayList<Integer>());
         setChildToOperatorsMap(new HashMap<Integer, List<String>>());
@@ -239,12 +243,11 @@ public class FogDevice extends PowerDatacenter {
 
         clusterTupleQueue = new LinkedList<>();
         setClusterLinkBusy(false);
-        
-     // 初始化可用的 MIPS 和 RAM
-        this.availableMips = mips; // 或根据实际情况调整
-        this.availableRam = ram; // 或根据实际情况调整
-        this.trustValue = 1.0; // 默认信任值
-        
+
+        // 初始化可用的 MIPS 和 RAM
+        this.availableMips = mips;
+        this.availableRam = ram;
+        this.trustValue = 1.0; // 預設信任值
     }
     
     
@@ -1206,5 +1209,3 @@ public class FogDevice extends PowerDatacenter {
 
 
 }
-
-

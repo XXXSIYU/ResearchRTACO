@@ -3,6 +3,8 @@ package org.fog.test.perfeval;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Calendar;
+
 import org.fog.entities.RTACOFogDevice;
 import org.fog.entities.Task;
 import org.fog.placement.RTACOPlacement;
@@ -12,22 +14,31 @@ import org.fog.utils.TaskGenerator;
 import org.fog.utils.VMClustering;
 import org.fog.utils.FormulaUtils;
 import org.fog.utils.Pair;
+import org.cloudbus.cloudsim.core.CloudSim;
 
-public class MainRTACOSimulator {
+public class MainRTACOSimulation {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        // 初始化 CloudSim
+        int numUser = 1; // 使用者數量
+        Calendar calendar = Calendar.getInstance();
+        boolean traceFlag = false; // 記錄事件
+
+        // 初始化 CloudSim 模擬環境
+        CloudSim.init(numUser, calendar, traceFlag);
+
         // Step 1: 生成虛擬機和任務
         int numVMs = 200; // 虛擬機數量
         int numTasks = 100; // 任務數量
 
         // 生成虛擬機
-        List<RTACOFogDevice> vms = VMGenerator.generateVMsTypeB(numVMs);
+        List<RTACOFogDevice> vms = VMGenerator.generateRTACOFogDevices(numVMs);
 
         // 生成任務
         List<Task> tasks = TaskGenerator.generateTasks(numTasks);
 
         // Step 2: VM 選擇
-        List<RTACOFogDevice> selectedVMs = VMSelection.selectVMs(vms);
+        List<RTACOFogDevice> selectedVMs = VMSelection.selectRTACOFogDevices(vms);
         selectedVMs.sort((vm1, vm2) -> Integer.compare(vm1.getId(), vm2.getId()));
 
         System.out.println("\n選擇的虛擬機：");
@@ -92,6 +103,10 @@ public class MainRTACOSimulator {
 
         System.out.println("\nClustering 方法結果：");
         displayResults(allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
+
+        // 可以在此處啟動模擬，如果需要
+        // CloudSim.startSimulation();
+        // CloudSim.stopSimulation();
     }
 
     // 用於顯示結果的輔助方法

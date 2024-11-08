@@ -1,9 +1,12 @@
 package org.fog.utils;
 
-import org.fog.entities.RTACOFogDevice;
 import java.util.ArrayList;
 import java.util.List;
+import org.fog.entities.RTACOFogDevice;
 
+/**
+ * VMSelection 類用於選擇合適的 RTACOFogDevice，基於可用 CPU、記憶體和信任值。
+ */
 public class VMSelection {
 
     // 正規化特徵的方法
@@ -37,19 +40,19 @@ public class VMSelection {
         }
 
         return XNormalized;
-    }
+    } 
 
-    // 選擇合適的 VM
-    public static List<RTACOFogDevice> selectVMs(List<RTACOFogDevice> vms) {
-        int numVms = vms.size();
-        double[][] features = new double[numVms][3];
+    // 選擇合適的 RTACOFogDevice
+    public static List<RTACOFogDevice> selectRTACOFogDevices(List<RTACOFogDevice> devices) {
+        int numDevices = devices.size();
+        double[][] features = new double[numDevices][3];
 
-        // 獲取每個 VM 的可用 CPU、記憶體和信任值
-        for (int i = 0; i < numVms; i++) {
-            RTACOFogDevice vm = vms.get(i);
-            features[i][0] = vm.getAvailableCpu();
-            features[i][1] = vm.getAvailableMemory();
-            features[i][2] = vm.getTrustValue();
+        // 獲取每個設備的可用 CPU、記憶體和信任值
+        for (int i = 0; i < numDevices; i++) {
+            RTACOFogDevice device = devices.get(i);
+            features[i][0] = device.getAvailableCpu();
+            features[i][1] = device.getAvailableMemory();
+            features[i][2] = device.getTrustValue();
         }
 
         // 正規化特徵
@@ -57,10 +60,10 @@ public class VMSelection {
 
         // 權重
         double[] weights = {0.25, 0.25, 0.5};
-        double[] scores = new double[numVms];
+        double[] scores = new double[numDevices];
 
-        // 計算每個 VM 的分數
-        for (int i = 0; i < numVms; i++) {
+        // 計算每個設備的分數
+        for (int i = 0; i < numDevices; i++) {
             scores[i] = 0;
             for (int j = 0; j < 3; j++) {
                 scores[i] += normalizedFeatures[i][j] * weights[j];
@@ -70,15 +73,15 @@ public class VMSelection {
         // 計算分數閾值（20 百分位數）
         double threshold = calculatePercentile(scores, 20);
 
-        // 選擇分數高於閾值的 VM
-        List<RTACOFogDevice> selectedVMs = new ArrayList<>();
-        for (int i = 0; i < numVms; i++) {
+        // 選擇分數高於閾值的設備
+        List<RTACOFogDevice> selectedDevices = new ArrayList<>();
+        for (int i = 0; i < numDevices; i++) {
             if (scores[i] > threshold) {
-                selectedVMs.add(vms.get(i));
+                selectedDevices.add(devices.get(i));
             }
         }
 
-        return selectedVMs;
+        return selectedDevices;
     }
 
     // 計算百分位數的方法
@@ -95,5 +98,5 @@ public class VMSelection {
             double weight = rank - lowerIndex;
             return sortedScores[lowerIndex] * (1 - weight) + sortedScores[upperIndex] * weight;
         }
-    }
+    } 
 }
