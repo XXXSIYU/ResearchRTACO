@@ -21,10 +21,6 @@ import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.*;
 import org.json.simple.JSONObject;
 
-import org.cloudbus.cloudsim.core.SimEntity;
-
-
-
 import java.util.*;
 
 public class FogDevice extends PowerDatacenter {
@@ -97,6 +93,10 @@ public class FogDevice extends PowerDatacenter {
     private int availableRam;
     private double trustValue;
 
+    /**
+     * 第一個構造函數，接受已初始化的 FogDeviceCharacteristics 和 VmAllocationPolicy。
+     * 這個構造函數將被第二個構造函數調用。
+     */
     public FogDevice(
             String name,
             FogDeviceCharacteristics characteristics,
@@ -105,29 +105,31 @@ public class FogDevice extends PowerDatacenter {
             double schedulingInterval,
             double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips) throws Exception {
         super(name, characteristics, vmAllocationPolicy, storageList, schedulingInterval);
-        setCharacteristics(characteristics);
-        setVmAllocationPolicy(vmAllocationPolicy);
-        setLastProcessTime(0.0);
-        setStorageList(storageList);
-        setVmList(new ArrayList<Vm>());
-        setSchedulingInterval(schedulingInterval);
+        // 初始化其他屬性
+        setLevel(1);
         setUplinkBandwidth(uplinkBandwidth);
         setDownlinkBandwidth(downlinkBandwidth);
-        setUplinkLatency(uplinkLatency);
+        setUplinkLatency(uplinkLatency); // 根據需要設置
         setRatePerMips(ratePerMips);
+
         setAssociatedActuatorIds(new ArrayList<Pair<Integer, Double>>());
+
         for (Host host : getCharacteristics().getHostList()) {
             host.setDatacenter(this);
         }
+
         setActiveApplications(new ArrayList<String>());
-        // If this resource doesn't have any PEs then no useful at all
+
+        // 如果資源沒有任何 PEs，則拋出異常
         if (getCharacteristics().getNumberOfPes() == 0) {
             throw new Exception(super.getName()
                     + " : Error - this entity has no PEs. Therefore, can't process any Cloudlets.");
         }
-        // Stores id of this class
+
+        // 設置 ID
         getCharacteristics().setId(super.getId());
 
+        // 初始化映射和隊列
         applicationMap = new HashMap<String, Application>();
         appToModulesMap = new HashMap<String, List<String>>();
         northTupleQueue = new LinkedList<Tuple>();
@@ -145,21 +147,89 @@ public class FogDevice extends PowerDatacenter {
         this.energyConsumption = 0;
         this.lastUtilization = 0;
         setTotalCost(0);
-        setModuleInstanceCount(new HashMap<String, Map<String, Integer>>());
         setChildToLatencyMap(new HashMap<Integer, Double>());
+        setModuleInstanceCount(new HashMap<String, Map<String, Integer>>());
 
         clusterTupleQueue = new LinkedList<>();
         setClusterLinkBusy(false);
     }
 
+    /**
+     * 第二個構造函數，根據提供的參數初始化 FogDevice。
+     * 這個構造函數會調用第一個構造函數。
+     */
     public FogDevice(
             String name, long mips, int ram,
-            double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel) throws Exception {
+            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, PowerModel powerModel) throws Exception {
 
+        // 使用構造函數鏈接調用第一個構造函數
+        this(
+                name,
+                createFogDeviceCharacteristics(mips, ram, powerModel),
+                createVmAllocationPolicy(mips, ram, powerModel),
+                new LinkedList<Storage>(),
+                0,
+                uplinkBandwidth,
+                downlinkBandwidth,
+                uplinkLatency,
+                ratePerMips
+        );
+
+        // 初始化可用的 MIPS 和 RAM
+        this.availableMips = mips;
+        this.availableRam = ram;
+        this.trustValue = 1.0; // 預設信任值
+    }
+
+    /**
+     * 私有靜態方法，用於創建 FogDeviceCharacteristics。
+     */
+    private static FogDeviceCharacteristics createFogDeviceCharacteristics(long mips, int ram, PowerModel powerModel) {
         // 創建 Pe 列表
         List<Pe> peList = new ArrayList<Pe>();
         peList.add(new Pe(0, new PeProvisionerOverbooking(mips))); // Need to store Pe id and MIPS Rating
 
+        // 創建 host
+        int hostId = FogUtils.generateEntityId();
+        long storage = 1000000; // Host storage
+        int bw = 10000; // Bandwidth
+
+        PowerHost host = new PowerHost(
+                hostId,
+                new RamProvisionerSimple(ram),
+                new BwProvisionerOverbooking(bw),
+                storage,
+                peList,
+                new StreamOperatorScheduler(peList),
+                powerModel
+        );
+
+        // 定義資料中心特性
+        String arch = Config.FOG_DEVICE_ARCH;
+        String os = Config.FOG_DEVICE_OS;
+        String vmm = Config.FOG_DEVICE_VMM;
+        double time_zone = Config.FOG_DEVICE_TIMEZONE;
+        double cost = Config.FOG_DEVICE_COST;
+        double costPerMem = Config.FOG_DEVICE_COST_PER_MEMORY;
+        double costPerStorage = Config.FOG_DEVICE_COST_PER_STORAGE;
+        double costPerBw = Config.FOG_DEVICE_COST_PER_BW;
+
+        FogDeviceCharacteristics characteristics = new FogDeviceCharacteristics(
+                arch, os, vmm, host, time_zone, cost, costPerMem,
+                costPerStorage, costPerBw);
+
+        return characteristics;
+    }
+
+    /**
+     * 私有靜態方法，用於創建 VmAllocationPolicy。
+     */
+    private static VmAllocationPolicy createVmAllocationPolicy(long mips, int ram, PowerModel powerModel) {
+        // 創建 Pe 列表
+        List<Pe> peList = new ArrayList<Pe>();
+        peList.add(new Pe(0, new PeProvisionerOverbooking(mips)));
+
+        // 創建 host
         int hostId = FogUtils.generateEntityId();
         long storage = 1000000; // Host storage
         int bw = 10000; // Bandwidth
@@ -180,83 +250,18 @@ public class FogDevice extends PowerDatacenter {
         // 創建 VmAllocationPolicy
         VmAllocationPolicy vmAllocationPolicy = new AppModuleAllocationPolicy(hostList);
 
-        // 定義資料中心特性
-        String arch = Config.FOG_DEVICE_ARCH;
-        String os = Config.FOG_DEVICE_OS;
-        String vmm = Config.FOG_DEVICE_VMM;
-        double time_zone = Config.FOG_DEVICE_TIMEZONE;
-        double cost = Config.FOG_DEVICE_COST;
-        double costPerMem = Config.FOG_DEVICE_COST_PER_MEMORY;
-        double costPerStorage = Config.FOG_DEVICE_COST_PER_STORAGE;
-        double costPerBw = Config.FOG_DEVICE_COST_PER_BW;
-
-        FogDeviceCharacteristics characteristics = new FogDeviceCharacteristics(
-                arch, os, vmm, host, time_zone, cost, costPerMem,
-                costPerStorage, costPerBw);
-
-        // 呼叫父類構造函數，傳遞已初始化的參數
-        super(name, characteristics, vmAllocationPolicy, new LinkedList<Storage>(), 0);
-
-        // 設定 FogDevice 的其他屬性
-        setLevel(1);
-        setUplinkBandwidth(uplinkBandwidth);
-        setDownlinkBandwidth(downlinkBandwidth);
-        setUplinkLatency(0); // 根據需要設置
-        setRatePerMips(ratePerMips);
-
-        setCharacteristics(characteristics);
-        setVmAllocationPolicy(vmAllocationPolicy);
-        setLastProcessTime(0.0);
-        setVmList(new ArrayList<Vm>());
-        setSchedulingInterval(0);
-        setAssociatedActuatorIds(new ArrayList<Pair<Integer, Double>>());
-        for (Host host1 : getCharacteristics().getHostList()) {
-            host1.setDatacenter(this);
-        }
-        setActiveApplications(new ArrayList<String>());
-        if (getCharacteristics().getNumberOfPes() == 0) {
-            throw new Exception(super.getName()
-                    + " : Error - this entity has no PEs. Therefore, can't process any Cloudlets.");
-        }
-
-        getCharacteristics().setId(super.getId());
-
-        applicationMap = new HashMap<String, Application>();
-        appToModulesMap = new HashMap<String, List<String>>();
-        northTupleQueue = new LinkedList<Tuple>();
-        southTupleQueue = new LinkedList<Pair<Tuple, Integer>>();
-        setNorthLinkBusy(false);
-        setSouthLinkBusy(false);
-
-        setChildrenIds(new ArrayList<Integer>());
-        setChildToOperatorsMap(new HashMap<Integer, List<String>>());
-
-        this.cloudTrafficMap = new HashMap<Integer, Integer>();
-
-        this.lockTime = 0;
-
-        this.energyConsumption = 0;
-        this.lastUtilization = 0;
-        setTotalCost(0);
-        setChildToLatencyMap(new HashMap<Integer, Double>());
-        setModuleInstanceCount(new HashMap<String, Map<String, Integer>>());
-
-        clusterTupleQueue = new LinkedList<>();
-        setClusterLinkBusy(false);
-
-        // 初始化可用的 MIPS 和 RAM
-        this.availableMips = mips;
-        this.availableRam = ram;
-        this.trustValue = 1.0; // 預設信任值
+        return vmAllocationPolicy;
     }
     
     
-    public long getAvailableMips() {
-        return getAvailableMips();
+    // 以下為 FogDevice 類別的其他方法，保持不變
+
+    public long getAvailableMipsValue() { // 修正方法名，避免與變數名衝突
+        return availableMips;
     }
 
-    public int getAvailableRam() {
-        return getAvailableRam();
+    public int getAvailableRamValue() { // 修正方法名，避免與變數名衝突
+        return availableRam;
     }
 
     public double getTrustValue() {
@@ -578,6 +583,8 @@ public class FogDevice extends PowerDatacenter {
             }
         }
     }
+    
+   
 
     protected int getChildIdWithRouteTo(int targetDeviceId) {
         for (Integer childId : getChildrenIds()) {

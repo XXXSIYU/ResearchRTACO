@@ -35,6 +35,9 @@ public class VMGenerator {
             double ratePerMips = 0.01;
             // 傳輸速率，範圍 [300, 600]，單位：Mbps
             double transmissionRate = 300 + rand.nextInt(301);
+            // 上行延遲，範圍 [10, 100]，單位：ms
+            double uplinkLatency = 10 + rand.nextDouble() * 90;
+
 
             // 使用簡單的線性功耗模型
             PowerModel powerModel = new PowerModelLinear(100, 1000);
@@ -46,6 +49,7 @@ public class VMGenerator {
                     ram,
                     uplinkBandwidth,
                     downlinkBandwidth,
+                    uplinkLatency, // 新增 uplinkLatency
                     ratePerMips,
                     powerModel,
                     transmissionRate

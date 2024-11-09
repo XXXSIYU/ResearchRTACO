@@ -34,8 +34,11 @@ public class RTACOFogDevice extends FogDevice {
      * @param powerModel 電源模型，用來計算設備的功耗
      * @param transmissionRate 傳輸速率
      */
-    public RTACOFogDevice(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel, double transmissionRate) throws Exception {
-        super(name, mips, ram, uplinkBandwidth, downlinkBandwidth, ratePerMips, powerModel);
+    public RTACOFogDevice(
+            String name, long mips, int ram,
+            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips,
+            PowerModel powerModel, double transmissionRate) throws Exception {
+        super(name, mips, ram, uplinkBandwidth, downlinkBandwidth, uplinkLatency, ratePerMips, powerModel);
         this.availableCpu = mips; // 初始化設備的可用 CPU 為設備的 MIPS 值
         this.totalCpu = mips;  // 設定總 CPU
         this.availableMemory = ram; // 初始化設備的可用 RAM
@@ -47,6 +50,7 @@ public class RTACOFogDevice extends FogDevice {
         this.x = random.nextDouble(); // 初始化 X 軸坐標
         this.y = random.nextDouble(); // 初始化 Y 軸坐標
     }
+
 
     /**
      * 初始化信任值，範圍在 0.8 到 1.0 之間。
