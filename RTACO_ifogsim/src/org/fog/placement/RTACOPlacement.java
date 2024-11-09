@@ -407,6 +407,8 @@ public class RTACOPlacement extends ModulePlacement {
                         double distance = Math.sqrt(Math.pow(vms.get(i).getX() - vms.get(j).getX(), 2) + Math.pow(vms.get(i).getY() - vms.get(j).getY(), 2));
                         double beta = lightIntensities[j] * Math.exp(-gamma * Math.pow(distance, 2));
 
+                     // 在 allocateTaskFA 方法中的螢火蟲互動部分
+                     // 確保在調用 setX 和 setY 前，已經有適當的 newX 和 newY 計算
                         vms.get(i).setX(vms.get(i).getX() + beta * (vms.get(j).getX() - vms.get(i).getX()) + alpha * epsilon);
                         vms.get(i).setY(vms.get(i).getY() + beta * (vms.get(j).getY() - vms.get(i).getY()) + alpha * epsilon);
 
