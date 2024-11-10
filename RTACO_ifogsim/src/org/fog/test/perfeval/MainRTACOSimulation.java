@@ -8,6 +8,7 @@ import java.util.Calendar;
 import org.fog.entities.RTACOFogDevice;
 import org.fog.entities.Task;
 import org.fog.placement.RTACOPlacement;
+import org.fog.placement.PlacementStrategy;
 import org.fog.utils.VMGenerator;
 import org.fog.utils.VMSelection;
 import org.fog.utils.TaskGenerator;
@@ -54,7 +55,21 @@ public class MainRTACOSimulation {
         }
 
         // Step 3: 任務分配方法
-        RTACOPlacement placement = new RTACOPlacement(vms);
+        RTACOPlacement placement = new RTACOPlacement(vms); // 使用新的構造函數
+
+        // Baseline 方法
+        List<Double> taskCompletionTimeBaseline = new ArrayList<>();
+        List<Double> energyConsumptionBaseline = new ArrayList<>();
+        double aruBaseline = 0.0, lbBaseline = 0.0;
+        List<RTACOFogDevice> remainingVMsBaseline = new ArrayList<>(vms); // 或選擇 selectedVMs 根據需求
+        List<Integer> untrustedVmsBaseline = new ArrayList<>(); // 如果有不可信任的 VM，請添加其 ID
+
+        List<Pair<Integer, Integer>> allocatedTasksBaseline = placement.assignTasksWithBaseline(
+                tasks, vms, taskCompletionTimeBaseline, remainingVMsBaseline,
+                energyConsumptionBaseline, aruBaseline, lbBaseline, untrustedVmsBaseline);
+
+        System.out.println("\nBaseline 方法結果：");
+        displayResults(allocatedTasksBaseline, taskCompletionTimeBaseline, energyConsumptionBaseline);
 
         // FA (Firefly Algorithm) 方法
         List<Double> taskCompletionTimeFA = new ArrayList<>();

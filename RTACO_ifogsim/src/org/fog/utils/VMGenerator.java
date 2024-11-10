@@ -6,7 +6,6 @@ import java.util.Random;
 
 import org.fog.entities.RTACOFogDevice;
 import org.fog.entities.Task;
-import org.fog.placement.RTACOPlacement;
 import org.fog.utils.VMGenerator;
 import org.fog.utils.VMSelection;
 import org.fog.utils.TaskGenerator;
@@ -62,6 +61,7 @@ public class VMGenerator {
                     powerModel,
                     transmissionRate
             );
+
 
             devices.add(device);
         }

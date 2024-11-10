@@ -1,5 +1,9 @@
 package org.fog.utils;
 
+/**
+ * Constant 類包含了在項目中使用的各種常量。
+ */
+
 public class Constant {
     public static final double ENERGY_CONSUMPTION_TRANSMISSION = 1.0;
     public static final double ENERGY_CONSUMPTION_PROCESSING = 10.0;
