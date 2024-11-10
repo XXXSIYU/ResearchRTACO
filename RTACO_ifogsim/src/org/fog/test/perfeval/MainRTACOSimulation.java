@@ -57,6 +57,9 @@ public class MainRTACOSimulation {
         // Step 3: 任務分配方法
         RTACOPlacement placement = new RTACOPlacement(vms); // 使用新的構造函數
 
+        // 將任務列表傳遞給 RTACOPlacement 類
+        placement.setTasks(tasks);
+
         // Baseline 方法
         List<Double> taskCompletionTimeBaseline = new ArrayList<>();
         List<Double> energyConsumptionBaseline = new ArrayList<>();

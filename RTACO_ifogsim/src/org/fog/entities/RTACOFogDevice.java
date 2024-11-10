@@ -14,6 +14,7 @@ public class RTACOFogDevice {
     private double availableCpu;
     private double availableMemory;
     private double energyPerMips;
+    private double cpuCapacity;
     private double trustValue;
     private double x;
     private double y;
@@ -141,7 +142,10 @@ public class RTACOFogDevice {
      * @return 初始信任值
      */
     public double initialTrustValue() {
-        return 1.0; // 示例初始信任值
+    	// 根據 VM 的特性計算初始信任值，例如 CPU 性能、可靠性等
+        // 假設 CPU 容量在 0 到 100 之間
+        return this.cpuCapacity / 100.0;
+
     }
 
     /**

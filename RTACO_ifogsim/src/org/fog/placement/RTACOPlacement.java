@@ -18,13 +18,14 @@ import java.util.Random;
 
 /**
  * RTACOPlacement 類實現了不同的任務分配策略，
- * 包括 Baseline 和 Clustering 方法。
+ * 包括 Baseline、Clustering、APSO、FA 和 MinFun 方法。
  */
 public class RTACOPlacement extends ModulePlacement {
     private List<RTACOFogDevice> fogDevices;
     private List<AppModule> modules;
     private Map<Integer, Double> trustValues; // 存放信任值
     private PlacementStrategy placementStrategy; // 分配策略
+    private List<Task> tasks; // 任務列表
 
     /**
      * RTACOPlacement 建構子，設置分配策略
@@ -53,11 +54,20 @@ public class RTACOPlacement extends ModulePlacement {
         initializeTrustValues();
     }
 
+    /**
+     * 設置任務列表的方法
+     */
+    public void setTasks(List<Task> tasks) {
+        this.tasks = tasks;
+    }
 
     @Override
     protected void mapModules() {
-        // 假設您有一個任務列表和其他所需的參數
-        List<Task> tasks = getTasks(); // 取得任務列表
+        if (tasks == null || tasks.isEmpty()) {
+            System.err.println("任務列表為空，無法進行分配。");
+            return;
+        }
+
         List<Double> taskCompletionTime = new ArrayList<>();
         List<Double> energyConsumptionClustered = new ArrayList<>();
         List<RTACOFogDevice> remainingVms = new ArrayList<>(fogDevices);
@@ -144,6 +154,12 @@ public class RTACOPlacement extends ModulePlacement {
         }
 
         // 更新負載均衡和資源利用率（已在各個方法中完成）
+
+        // 打印更新後的信任值
+        System.out.println("\n更新後的 VM 信任值：");
+        for (RTACOFogDevice vm : fogDevices) {
+            System.out.println("VM ID: " + vm.getId() + ", 信任值: " + vm.getTrustValue());
+        }
     }
 
     /**
@@ -151,7 +167,33 @@ public class RTACOPlacement extends ModulePlacement {
      */
     private void initializeTrustValues() {
         for (RTACOFogDevice device : fogDevices) {
-            trustValues.put(device.getId(), device.initialTrustValue());
+            double initialTrust = device.initialTrustValue();
+            trustValues.put(device.getId(), initialTrust);
+            device.setTrustValue(initialTrust); // 設置 VM 對象中的信任值
+            System.out.println("VM ID: " + device.getId() + ", Initial Trust Value: " + initialTrust);
+        }
+    }
+
+    /**
+     * 添加 updateTrustValue 方法
+     */
+    private void updateTrustValue(int vmId, boolean taskSuccess) {
+        double currentTrust = trustValues.getOrDefault(vmId, 1.0);
+        if (taskSuccess) {
+            currentTrust += 0.1;
+        } else {
+            currentTrust -= 0.1;
+        }
+        // 確保信任值在 0 到 1 之間
+        currentTrust = Math.max(0.0, Math.min(currentTrust, 1.0));
+        trustValues.put(vmId, currentTrust);
+        // 更新 VM 對象中的信任值
+        for (RTACOFogDevice vm : fogDevices) {
+            if (vm.getId() == vmId) {
+                vm.setTrustValue(currentTrust);
+                System.out.println("VM ID: " + vmId + ", Updated Trust Value: " + currentTrust);
+                break;
+            }
         }
     }
 
@@ -172,17 +214,26 @@ public class RTACOPlacement extends ModulePlacement {
         Map<Integer, Integer> vmSelectedTimes = new HashMap<>();
         Random random = new Random();
 
+        // 按信任值排序，優先選擇信任值高的 VM
+        vms.sort((vm1, vm2) -> Double.compare(trustValues.get(vm2.getId()), trustValues.get(vm1.getId())));
+
         for (Task task : tasks) {
-            // 選擇一個隨機的 VM
-            RTACOFogDevice bestVm = vms.get(random.nextInt(vms.size()));
+            RTACOFogDevice bestVm = null;
+            for (RTACOFogDevice vm : vms) {
+                if (vm.getAvailableCpu() >= task.getCpuRequirement() &&
+                    vm.getAvailableMemory() >= task.getMemoryRequirement() &&
+                    task.getDeadline() >= FormulaUtils.completionTime(task, vm)) {
 
-            // 檢查 VM 是否有足夠的資源並且任務的截止時間允許
-            if (bestVm.getAvailableCpu() >= task.getCpuRequirement() &&
-                bestVm.getAvailableMemory() >= task.getMemoryRequirement() &&
-                task.getDeadline() >= FormulaUtils.completionTime(task, bestVm)) {
+                    bestVm = vm;
+                    break; // 找到第一個滿足條件的 VM
+                }
+            }
 
-                // 分配任務
+            if (bestVm != null) {
                 allocatedTasks.add(new Pair<>(task.getId(), bestVm.getId()));
+
+                // 模擬任務成功與否（這裡隨機決定，實際情況應根據真實數據）
+                boolean taskSuccess = random.nextBoolean();
 
                 // 調整完成時間和能量消耗
                 if (untrustedVms.contains(bestVm.getId())) {
@@ -199,6 +250,9 @@ public class RTACOPlacement extends ModulePlacement {
 
                 // 更新 VM 被選中的次數
                 vmSelectedTimes.put(bestVm.getId(), vmSelectedTimes.getOrDefault(bestVm.getId(), 0) + 1);
+
+                // 更新信任值
+                updateTrustValue(bestVm.getId(), taskSuccess);
             }
         }
 
@@ -236,9 +290,6 @@ public class RTACOPlacement extends ModulePlacement {
                 vmGroups.computeIfAbsent(label, k -> new ArrayList<>()).add(vms.get(i));
             }
         }
-
-        // 使用 VMSelection 選擇合適的 VM
-        List<RTACOFogDevice> selectedVMs = VMSelection.selectRTACOFogDevices(vms);
 
         // 計算完成時間與能量消耗的最小值和最大值
         double minCompletionTime = Double.POSITIVE_INFINITY;
@@ -289,6 +340,9 @@ public class RTACOPlacement extends ModulePlacement {
             if (bestVm != null) {
                 allocatedTasks.add(new Pair<>(task.getId(), bestVm.getId()));
 
+                // 模擬任務成功與否（這裡隨機決定，實際情況應根據真實數據）
+                boolean taskSuccess = random.nextBoolean();
+
                 if (untrustedVms.contains(bestVm.getId())) {
                     taskCompletionTime.add(FormulaUtils.completionTime(task, bestVm) * 1.5);
                     energyConsumptionClustered.add(FormulaUtils.energyConsumption(task, bestVm) * 2.5);
@@ -303,6 +357,9 @@ public class RTACOPlacement extends ModulePlacement {
 
                 // 更新 VM 被選中的次數
                 vmSelectedTimes.put(bestVm.getId(), vmSelectedTimes.getOrDefault(bestVm.getId(), 0) + 1);
+
+                // 更新信任值
+                updateTrustValue(bestVm.getId(), taskSuccess);
             }
         }
 
@@ -332,6 +389,9 @@ public class RTACOPlacement extends ModulePlacement {
         // APSO 分配邏輯的具體實現
         // 這裡僅提供一個簡單的示例
 
+        // 按信任值排序，優先選擇信任值高的 VM
+        vms.sort((vm1, vm2) -> Double.compare(trustValues.get(vm2.getId()), trustValues.get(vm1.getId())));
+
         for (Task task : tasks) {
             // 遍歷所有 VM，選擇具有最低目標函數值的 VM
             RTACOFogDevice bestVm = null;
@@ -343,6 +403,8 @@ public class RTACOPlacement extends ModulePlacement {
                     task.getDeadline() >= FormulaUtils.completionTime(task, vm)) {
 
                     double objValue = ObjectiveFunction.objectiveFunction(task, vm, vmSelectedTimes);
+                    // 考慮信任值
+                    objValue -= vm.getTrustValue() * 10; // 示例：信任值對目標函數的影響
                     if (objValue < bestObjective) {
                         bestObjective = objValue;
                         bestVm = vm;
@@ -352,6 +414,9 @@ public class RTACOPlacement extends ModulePlacement {
 
             if (bestVm != null) {
                 allocatedTasks.add(new Pair<>(task.getId(), bestVm.getId()));
+
+                // 模擬任務成功與否（這裡隨機決定，實際情況應根據真實數據）
+                boolean taskSuccess = new Random().nextBoolean();
 
                 if (untrustedVms.contains(bestVm.getId())) {
                     taskCompletionTime.add(FormulaUtils.completionTime(task, bestVm) * 1.5);
@@ -367,6 +432,9 @@ public class RTACOPlacement extends ModulePlacement {
 
                 // 更新 VM 被選中的次數
                 vmSelectedTimes.put(bestVm.getId(), vmSelectedTimes.getOrDefault(bestVm.getId(), 0) + 1);
+
+                // 更新信任值
+                updateTrustValue(bestVm.getId(), taskSuccess);
             }
         }
 
@@ -427,7 +495,7 @@ public class RTACOPlacement extends ModulePlacement {
                         double newY = vms.get(i).getY() + beta * (vms.get(j).getY() - vms.get(i).getY()) + alpha * (random.nextDouble() * 2 - 1) * epsilon;
 
                         vms.get(i).setX(newX);
-                        vms.get(i).setY(newY);
+                        vms.get(i).setY(newY); // 修正此處
 
                         // 交換螢火蟲位置
                         RTACOFogDevice tempVm = vms.get(i);
@@ -451,6 +519,8 @@ public class RTACOPlacement extends ModulePlacement {
                     task.getDeadline() >= FormulaUtils.completionTime(task, vm)) {
 
                     double objValue = ObjectiveFunction.objectiveFunction(task, vm, vmSelectedTimes);
+                    // 考慮信任值
+                    objValue -= vm.getTrustValue() * 10; // 示例：信任值對目標函數的影響
                     if (objValue < bestObjValue) {
                         bestVm = vm;
                         bestObjValue = objValue;
@@ -467,6 +537,10 @@ public class RTACOPlacement extends ModulePlacement {
                 bestVm.setAvailableCpu(bestVm.getAvailableCpu() - task.getCpuRequirement());
                 bestVm.setAvailableMemory(bestVm.getAvailableMemory() - task.getMemoryRequirement());
                 vmSelectedTimes.put(bestVm.getId(), vmSelectedTimes.getOrDefault(bestVm.getId(), 0) + 1);
+
+                // 更新信任值
+                boolean taskSuccess = random.nextBoolean(); // 模擬任務成功與否
+                updateTrustValue(bestVm.getId(), taskSuccess);
             }
         }
 
@@ -475,7 +549,7 @@ public class RTACOPlacement extends ModulePlacement {
         aru = FormulaUtils.resourceUtilization(vms);
         return allocatedTasks;
     }
-    
+
     /**
      * MINFUN 任務分配方法
      */
@@ -504,6 +578,8 @@ public class RTACOPlacement extends ModulePlacement {
                     task.getDeadline() >= FormulaUtils.completionTime(task, vm)) {
 
                     double cost = ObjectiveFunction.sysCost(task, vm, 0, 1000, 0, 1000); // 您需要根據實際範圍調整
+                    // 考慮信任值
+                    cost -= trustValues.get(vm.getId()) * 10; // 示例：信任值對成本的影響
                     if (cost < bestCost) {
                         bestCost = cost;
                         bestVm = vm;
@@ -520,6 +596,10 @@ public class RTACOPlacement extends ModulePlacement {
                 bestVm.setAvailableCpu(bestVm.getAvailableCpu() - task.getCpuRequirement());
                 bestVm.setAvailableMemory(bestVm.getAvailableMemory() - task.getMemoryRequirement());
                 vmSelectedTimes.put(bestVm.getId(), vmSelectedTimes.getOrDefault(bestVm.getId(), 0) + 1);
+
+                // 模擬任務成功與否
+                boolean taskSuccess = new Random().nextBoolean();
+                updateTrustValue(bestVm.getId(), taskSuccess);
             }
         }
 
@@ -530,13 +610,12 @@ public class RTACOPlacement extends ModulePlacement {
         return allocatedTasks;
     }
 
-
-
     /**
      * 取得任務列表的方法（示例）
      */
     private List<Task> getTasks() {
         // 根據您的需求實現此方法，返回當前需要分配的任務列表
+        // 這裡暫時返回空列表
         return new ArrayList<>();
     }
 
@@ -545,7 +624,15 @@ public class RTACOPlacement extends ModulePlacement {
      */
     private List<Integer> getUntrustedVms() {
         // 根據您的需求實現此方法，返回不可信任的 VM ID 列表
-        return new ArrayList<>();
+        // 例如，隨機選擇部分 VM 作為不可信任
+        List<Integer> untrustedVms = new ArrayList<>();
+        Random random = new Random();
+        for (RTACOFogDevice vm : fogDevices) {
+            if (random.nextDouble() < 0.1) { // 假設 10% 的 VM 是不可信任的
+                untrustedVms.add(vm.getId());
+            }
+        }
+        return untrustedVms;
     }
 
     /**
