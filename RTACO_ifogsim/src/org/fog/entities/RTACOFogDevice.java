@@ -1,6 +1,7 @@
 package org.fog.entities;
 
 import org.cloudbus.cloudsim.power.models.PowerModel;
+import java.util.Random;
 
 /**
  * RTACOFogDevice 類代表一個 Fog 設備，包含了設備的各種屬性和方法。
@@ -14,7 +15,6 @@ public class RTACOFogDevice {
     private double availableCpu;
     private double availableMemory;
     private double energyPerMips;
-    private double cpuCapacity;
     private double trustValue;
     private double x;
     private double y;
@@ -142,9 +142,10 @@ public class RTACOFogDevice {
      * @return 初始信任值
      */
     public double initialTrustValue() {
-    	// 根據 VM 的特性計算初始信任值，例如 CPU 性能、可靠性等
-        // 假設 CPU 容量在 0 到 100 之間
-        return this.cpuCapacity / 100.0;
+    	// 根據某些條件初始化信任值，例如隨機生成或基於歷史數據
+        // 這裡以隨機生成為例，範圍在 0.5 到 1.0 之間
+        Random random = new Random();
+        return 0.5 + (0.5 * random.nextDouble());
 
     }
 

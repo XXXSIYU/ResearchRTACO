@@ -17,6 +17,9 @@ import org.fog.utils.FormulaUtils;
 import org.fog.utils.Pair;
 import org.cloudbus.cloudsim.core.CloudSim;
 
+/**
+ * MainRTACOSimulation 類用於執行 RTACOPlacement 的模擬。
+ */
 public class MainRTACOSimulation {
 
     public static void main(String[] args) throws Exception {
@@ -72,7 +75,7 @@ public class MainRTACOSimulation {
                 energyConsumptionBaseline, aruBaseline, lbBaseline, untrustedVmsBaseline);
 
         System.out.println("\nBaseline 方法結果：");
-        displayResults(allocatedTasksBaseline, taskCompletionTimeBaseline, energyConsumptionBaseline);
+        displayResults(placement, allocatedTasksBaseline, taskCompletionTimeBaseline, energyConsumptionBaseline);
 
         // FA (Firefly Algorithm) 方法
         List<Double> taskCompletionTimeFA = new ArrayList<>();
@@ -84,7 +87,7 @@ public class MainRTACOSimulation {
                 energyConsumptionFA, aruFA, lbFA);
 
         System.out.println("\nFA (Firefly Algorithm) 結果：");
-        displayResults(allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
+        displayResults(placement, allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
 
         // APSO 方法
         List<Double> taskCompletionTimeAPSO = new ArrayList<>();
@@ -96,7 +99,7 @@ public class MainRTACOSimulation {
                 energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
 
         System.out.println("\nAPSO 結果：");
-        displayResults(allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
+        displayResults(placement, allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
 
         // MinFun 方法
         List<Double> taskCompletionTimeMinFun = new ArrayList<>();
@@ -108,7 +111,7 @@ public class MainRTACOSimulation {
                 energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
 
         System.out.println("\nMinFun 方法結果：");
-        displayResults(allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
+        displayResults(placement, allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
 
         // Clustering 方法
         List<Double> taskCompletionTimeCluster = new ArrayList<>();
@@ -120,15 +123,28 @@ public class MainRTACOSimulation {
                 energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
 
         System.out.println("\nClustering 方法結果：");
-        displayResults(allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
+        displayResults(placement, allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
+
+        // 計算並顯示 Makespan、負載平衡與資源利用率
+        double makespanBaseline = placement.calculateMakespan(taskCompletionTimeBaseline);
+        double loadBalanceBaseline = FormulaUtils.loadBalance(vms);
+        double resourceUtilizationBaseline = FormulaUtils.resourceUtilization(vms);
+
+        System.out.println("\nBaseline 方法詳細指標：");
+        System.out.println("Makespan: " + makespanBaseline);
+        System.out.println("負載平衡: " + loadBalanceBaseline);
+        System.out.println("資源利用率: " + resourceUtilizationBaseline);
+
+        // 其他方法的指標計算類似，可以根據需要添加
 
         // 可以在此處啟動模擬，如果需要
         // CloudSim.startSimulation();
         // CloudSim.stopSimulation();
     }
 
-    // 用於顯示結果的輔助方法
+    // 用於顯示結果的輔助方法（修正後，包含更多指標）
     private static void displayResults(
+            RTACOPlacement placement,
             List<Pair<Integer, Integer>> allocatedTasks,
             List<Double> taskCompletionTime,
             List<Double> energyConsumption) {
@@ -146,7 +162,14 @@ public class MainRTACOSimulation {
                 .average()
                 .orElse(0.0);
 
+        double makespan = placement.calculateMakespan(taskCompletionTime);
+        double loadBalance = FormulaUtils.loadBalance(placement.getVms());
+        double resourceUtilization = FormulaUtils.resourceUtilization(placement.getVms());
+
         System.out.println("平均完成時間: " + averageCompletionTime);
         System.out.println("平均能量消耗: " + averageEnergyConsumption);
+        System.out.println("Makespan: " + makespan);
+        System.out.println("負載平衡: " + loadBalance);
+        System.out.println("資源利用率: " + resourceUtilization);
     }
 }

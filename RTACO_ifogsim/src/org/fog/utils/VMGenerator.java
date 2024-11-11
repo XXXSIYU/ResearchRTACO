@@ -5,17 +5,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.fog.entities.RTACOFogDevice;
-import org.fog.entities.Task;
-import org.fog.utils.VMGenerator;
-import org.fog.utils.VMSelection;
-import org.fog.utils.TaskGenerator;
-import org.fog.utils.VMClustering;
-import org.fog.utils.FormulaUtils;
-import org.fog.utils.Pair;
-import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.power.models.PowerModel;
 import org.cloudbus.cloudsim.power.models.PowerModelLinear;
 
+/**
+ * VMGenerator 類用於生成指定數量的 RTACOFogDevice。
+ */
 public class VMGenerator {
 
     /**
@@ -47,7 +41,7 @@ public class VMGenerator {
             double uplinkLatency = 10 + rand.nextDouble() * 90;
 
             // 使用簡單的線性功耗模型
-            PowerModel powerModel = new PowerModelLinear(100, 1000);
+            PowerModelLinear powerModel = new PowerModelLinear(100, 1000);
 
             // 創建 RTACOFogDevice 實例，傳遞 transmissionRate 和 uplinkLatency
             RTACOFogDevice device = new RTACOFogDevice(
@@ -61,7 +55,6 @@ public class VMGenerator {
                     powerModel,
                     transmissionRate
             );
-
 
             devices.add(device);
         }
