@@ -32,8 +32,8 @@ public class MainRTACOSimulation {
         CloudSim.init(numUser, calendar, traceFlag);
 
         // Step 1: 生成虛擬機和任務
-        int numVMs = 200; // 虛擬機數量
-        int numTasks = 100; // 任務數量
+        int numVMs = 3200; // 虛擬機數量
+        int numTasks = 20000; // 任務數量
 
         // 生成虛擬機
         List<RTACOFogDevice> vms = VMGenerator.generateRTACOFogDevices(numVMs);
