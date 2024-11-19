@@ -26,7 +26,7 @@ public class RTACOPlacement extends ModulePlacement {
     private Map<Integer, Double> trustValues; // 存放信任值
     private PlacementStrategy placementStrategy; // 分配策略
     private List<Task> tasks; // 任務列表
-    
+
 
     /**
      * RTACOPlacement 建構子，設置分配策略
@@ -176,7 +176,7 @@ public class RTACOPlacement extends ModulePlacement {
     }
 
     /**
-     * 添加 updateTrustValue 方法
+     * 更新信任值的方法
      */
     private void updateTrustValue(int vmId, boolean taskSuccess) {
         double currentTrust = trustValues.getOrDefault(vmId, 1.0);
@@ -299,7 +299,6 @@ public class RTACOPlacement extends ModulePlacement {
                 vmGroups.computeIfAbsent(i % 5, k -> new ArrayList<>()).add(vms.get(i)); // 假設分成5個群組
             }
         }
-
 
         // 計算完成時間與能量消耗的最小值和最大值
         double minCompletionTime = Double.POSITIVE_INFINITY;
@@ -559,8 +558,6 @@ public class RTACOPlacement extends ModulePlacement {
         aru = FormulaUtils.resourceUtilization(vms);
         return allocatedTasks;
     }
-    
-    
 
     /**
      * MINFUN 任務分配方法
@@ -622,15 +619,6 @@ public class RTACOPlacement extends ModulePlacement {
         return allocatedTasks;
     }
 
-//    /**
-//     * 取得任務列表的方法（示例）
-//     */
-//    private List<Task> getTasks() {
-//        // 根據您的需求實現此方法，返回當前需要分配的任務列表
-//        // 這裡暫時返回空列表
-//        return new ArrayList<>();
-//    }
-
     /**
      * 取得不可信任的 VM 列表的方法（示例）
      */
@@ -646,14 +634,14 @@ public class RTACOPlacement extends ModulePlacement {
         }
         return untrustedVms;
     }
-    
+
     /**
      * 計算 Makespan 的方法
      */
     public double calculateMakespan(List<Double> taskCompletionTime) {
         return taskCompletionTime.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
     }
-    
+
     /**
      * 獲取虛擬機列表的方法
      *
@@ -662,8 +650,7 @@ public class RTACOPlacement extends ModulePlacement {
     public List<RTACOFogDevice> getVms() {
         return this.fogDevices;
     }
-    
-    
+
 
     /**
      * Range 類用於封裝完成時間和能量消耗的最小值和最大值。

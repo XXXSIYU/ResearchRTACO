@@ -8,7 +8,6 @@ import java.util.Calendar;
 import org.fog.entities.RTACOFogDevice;
 import org.fog.entities.Task;
 import org.fog.placement.RTACOPlacement;
-import org.fog.placement.PlacementStrategy;
 import org.fog.utils.VMGenerator;
 import org.fog.utils.VMSelection;
 import org.fog.utils.TaskGenerator;
@@ -32,8 +31,8 @@ public class MainRTACOSimulation {
         CloudSim.init(numUser, calendar, traceFlag);
 
         // Step 1: 生成虛擬機和任務
-        int numVMs = 3200; // 虛擬機數量
-        int numTasks = 20000; // 任務數量
+        int numVMs = 200; // 虛擬機數量
+        int numTasks = 500; // 任務數量
 
         // 生成虛擬機
         List<RTACOFogDevice> vms = VMGenerator.generateRTACOFogDevices(numVMs);
@@ -70,72 +69,115 @@ public class MainRTACOSimulation {
         List<RTACOFogDevice> remainingVMsBaseline = new ArrayList<>(vms); // 或選擇 selectedVMs 根據需求
         List<Integer> untrustedVmsBaseline = new ArrayList<>(); // 如果有不可信任的 VM，請添加其 ID
 
-        List<Pair<Integer, Integer>> allocatedTasksBaseline = placement.assignTasksWithBaseline(
-                tasks, vms, taskCompletionTimeBaseline, remainingVMsBaseline,
-                energyConsumptionBaseline, aruBaseline, lbBaseline, untrustedVmsBaseline);
+        try {
+            System.out.println("\n開始執行 Baseline 方法...");
+            List<Pair<Integer, Integer>> allocatedTasksBaseline = placement.assignTasksWithBaseline(
+                    tasks, vms, taskCompletionTimeBaseline, remainingVMsBaseline,
+                    energyConsumptionBaseline, aruBaseline, lbBaseline, untrustedVmsBaseline);
 
-        System.out.println("\nBaseline 方法結果：");
-        displayResults(placement, allocatedTasksBaseline, taskCompletionTimeBaseline, energyConsumptionBaseline);
+            System.out.println("Baseline 方法完成，分配了 " + allocatedTasksBaseline.size() + " 個任務。");
+            System.out.println("\nBaseline 方法結果：");
+            displayResults("Baseline 方法", placement, allocatedTasksBaseline, taskCompletionTimeBaseline, energyConsumptionBaseline);
+        } catch (Exception e) {
+            System.err.println("Baseline 方法執行失敗：");
+            e.printStackTrace();
+        }
 
         // FA (Firefly Algorithm) 方法
         List<Double> taskCompletionTimeFA = new ArrayList<>();
         List<Double> energyConsumptionFA = new ArrayList<>();
         double aruFA = 0.0, lbFA = 0.0;
         List<RTACOFogDevice> remainingVMsFA = new ArrayList<>(selectedVMs);
-        List<Pair<Integer, Integer>> allocatedTasksFA = placement.allocateTaskFA(
-                tasks, selectedVMs, taskCompletionTimeFA, remainingVMsFA,
-                energyConsumptionFA, aruFA, lbFA);
 
-        System.out.println("\nFA (Firefly Algorithm) 結果：");
-        displayResults(placement, allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
+        try {
+            System.out.println("\n開始執行 FA (Firefly Algorithm) 方法...");
+            List<Pair<Integer, Integer>> allocatedTasksFA = placement.allocateTaskFA(
+                    tasks, selectedVMs, taskCompletionTimeFA, remainingVMsFA,
+                    energyConsumptionFA, aruFA, lbFA);
+
+            System.out.println("FA (Firefly Algorithm) 方法完成，分配了 " + allocatedTasksFA.size() + " 個任務。");
+            System.out.println("\nFA (Firefly Algorithm) 結果：");
+            displayResults("FA (Firefly Algorithm)", placement, allocatedTasksFA, taskCompletionTimeFA, energyConsumptionFA);
+        } catch (Exception e) {
+            System.err.println("FA (Firefly Algorithm) 方法執行失敗：");
+            e.printStackTrace();
+        }
 
         // APSO 方法
         List<Double> taskCompletionTimeAPSO = new ArrayList<>();
         List<Double> energyConsumptionAPSO = new ArrayList<>();
         double aruAPSO = 0.0, lbAPSO = 0.0;
         List<RTACOFogDevice> remainingVMsAPSO = new ArrayList<>(selectedVMs);
-        List<Pair<Integer, Integer>> allocatedTasksAPSO = placement.allocateTaskAPSO(
-                tasks, selectedVMs, taskCompletionTimeAPSO, remainingVMsAPSO,
-                energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
 
-        System.out.println("\nAPSO 結果：");
-        displayResults(placement, allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
+        try {
+            System.out.println("\n開始執行 APSO 方法...");
+            List<Pair<Integer, Integer>> allocatedTasksAPSO = placement.allocateTaskAPSO(
+                    tasks, selectedVMs, taskCompletionTimeAPSO, remainingVMsAPSO,
+                    energyConsumptionAPSO, aruAPSO, lbAPSO, new ArrayList<>());
+
+            System.out.println("APSO 方法完成，分配了 " + allocatedTasksAPSO.size() + " 個任務。");
+            System.out.println("\nAPSO 方法結果：");
+            displayResults("APSO 方法", placement, allocatedTasksAPSO, taskCompletionTimeAPSO, energyConsumptionAPSO);
+        } catch (Exception e) {
+            System.err.println("APSO 方法執行失敗：");
+            e.printStackTrace();
+        }
 
         // MinFun 方法
         List<Double> taskCompletionTimeMinFun = new ArrayList<>();
         List<Double> energyConsumptionMinFun = new ArrayList<>();
         double aruMinFun = 0.0, lbMinFun = 0.0;
         List<RTACOFogDevice> remainingVMsMinFun = new ArrayList<>(vms);
-        List<Pair<Integer, Integer>> allocatedTasksMinFun = placement.assignTasksToVmsMinFun(
-                tasks, vms, taskCompletionTimeMinFun, remainingVMsMinFun,
-                energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
 
-        System.out.println("\nMinFun 方法結果：");
-        displayResults(placement, allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
+        try {
+            System.out.println("\n開始執行 MinFun 方法...");
+            List<Pair<Integer, Integer>> allocatedTasksMinFun = placement.assignTasksToVmsMinFun(
+                    tasks, vms, taskCompletionTimeMinFun, remainingVMsMinFun,
+                    energyConsumptionMinFun, vmClusters, aruMinFun, lbMinFun, new ArrayList<>());
+
+            System.out.println("MinFun 方法完成，分配了 " + allocatedTasksMinFun.size() + " 個任務。");
+            System.out.println("\nMinFun 方法結果：");
+            displayResults("MinFun 方法", placement, allocatedTasksMinFun, taskCompletionTimeMinFun, energyConsumptionMinFun);
+        } catch (Exception e) {
+            System.err.println("MinFun 方法執行失敗：");
+            e.printStackTrace();
+        }
 
         // Clustering 方法
         List<Double> taskCompletionTimeCluster = new ArrayList<>();
         List<Double> energyConsumptionCluster = new ArrayList<>();
         double aruCluster = 0.0, lbCluster = 0.0;
         List<RTACOFogDevice> remainingVMsCluster = new ArrayList<>(vms);
-        List<Pair<Integer, Integer>> allocatedTasksCluster = placement.assignTasksWithClustering(
-                tasks, vms, taskCompletionTimeCluster, remainingVMsCluster,
-                energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
 
-        System.out.println("\nClustering 方法結果：");
-        displayResults(placement, allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
+        try {
+            System.out.println("\n開始執行 Clustering 方法...");
+            List<Pair<Integer, Integer>> allocatedTasksCluster = placement.assignTasksWithClustering(
+                    tasks, vms, taskCompletionTimeCluster, remainingVMsCluster,
+                    energyConsumptionCluster, aruCluster, lbCluster, new ArrayList<>());
 
-        // 計算並顯示 Makespan、負載平衡與資源利用率
-        double makespanBaseline = placement.calculateMakespan(taskCompletionTimeBaseline);
-        double loadBalanceBaseline = FormulaUtils.loadBalance(vms);
-        double resourceUtilizationBaseline = FormulaUtils.resourceUtilization(vms);
+            System.out.println("Clustering 方法完成，分配了 " + allocatedTasksCluster.size() + " 個任務。");
+            System.out.println("\nClustering 方法結果：");
+            displayResults("Clustering 方法", placement, allocatedTasksCluster, taskCompletionTimeCluster, energyConsumptionCluster);
+        } catch (Exception e) {
+            System.err.println("Clustering 方法執行失敗：");
+            e.printStackTrace();
+        }
 
-        System.out.println("\nBaseline 方法詳細指標：");
-        System.out.println("Makespan: " + makespanBaseline);
-        System.out.println("負載平衡: " + loadBalanceBaseline);
-        System.out.println("資源利用率: " + resourceUtilizationBaseline);
-
-        // 其他方法的指標計算類似，可以根據需要添加
+        // 計算並顯示 Baseline 方法的詳細指標
+//        try {
+//            // 確保使用正確的 taskCompletionTimeBaseline 列表
+//            double makespanBaseline = placement.calculateMakespan(taskCompletionTimeBaseline);
+//            double loadBalanceBaseline = FormulaUtils.loadBalance(vms);
+//            double resourceUtilizationBaseline = FormulaUtils.resourceUtilization(vms);
+//
+//            System.out.println("\nBaseline 方法詳細指標：");
+//            System.out.println("Makespan: " + makespanBaseline);
+//            System.out.println("負載平衡: " + loadBalanceBaseline);
+//            System.out.println("資源利用率: " + resourceUtilizationBaseline);
+//        } catch (Exception e) {
+//            System.err.println("計算 Baseline 方法詳細指標失敗：");
+//            e.printStackTrace();
+//        }
 
         // 可以在此處啟動模擬，如果需要
         // CloudSim.startSimulation();
@@ -144,13 +186,24 @@ public class MainRTACOSimulation {
 
     // 用於顯示結果的輔助方法（修正後，包含更多指標）
     private static void displayResults(
+            String methodName,
             RTACOPlacement placement,
             List<Pair<Integer, Integer>> allocatedTasks,
             List<Double> taskCompletionTime,
             List<Double> energyConsumption) {
-        System.out.println("任務分配結果：");
-        for (Pair<Integer, Integer> task : allocatedTasks) {
+        System.out.println("----- " + methodName + " -----");
+        if (allocatedTasks == null || allocatedTasks.isEmpty()) {
+            System.out.println("沒有分配到任何任務。");
+            return;
+        }
+
+        System.out.println("任務分配結果（前 10 個任務）：");
+        for (int i = 0; i < Math.min(allocatedTasks.size(), 10); i++) {
+            Pair<Integer, Integer> task = allocatedTasks.get(i);
             System.out.println("任務 ID: " + task.getKey() + " -> VM ID: " + task.getValue());
+        }
+        if (allocatedTasks.size() > 10) {
+            System.out.println("... 共 " + allocatedTasks.size() + " 個任務");
         }
 
         double averageCompletionTime = taskCompletionTime.stream()
